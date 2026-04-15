@@ -88,6 +88,9 @@ name: onlyoffice
 networks:
   onlyoffice:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
 
 volumes:
   cs_data:
@@ -121,7 +124,9 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       - mysql_data:/var/lib/mysql
-    networks: [onlyoffice]
+    networks:
+      onlyoffice:
+        ipv4_address: 172.28.0.10
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${MYSQL_ROOT_PASSWORD}"]
       interval: 10s
@@ -135,7 +140,9 @@ services:
     command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}"]
     volumes:
       - redis_data:/data
-    networks: [onlyoffice]
+    networks:
+      onlyoffice:
+        ipv4_address: 172.28.0.11
     healthcheck:
       test: ["CMD-SHELL", "redis-cli -a \"$REDIS_PASSWORD\" ping | grep -q PONG"]
       interval: 10s
@@ -155,7 +162,9 @@ services:
       - ds_data:/var/www/onlyoffice/Data
       - ds_logs:/var/log/onlyoffice
       - ds_cache:/var/lib/onlyoffice/documentserver/App_Data/cache/files
-    networks: [onlyoffice]
+    networks:
+      onlyoffice:
+        ipv4_address: 172.28.0.12
     expose: ["80"]
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost/healthcheck"]
@@ -174,15 +183,15 @@ services:
     environment:
       MYSQL_SERVER_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_SERVER_DB_NAME: onlyoffice
-      MYSQL_SERVER_HOST: mysql
+      MYSQL_SERVER_HOST: 172.28.0.10
       MYSQL_SERVER_PORT: "3306"
       MYSQL_SERVER_USER: onlyoffice
       MYSQL_SERVER_PASS: ${MYSQL_PASSWORD}
-      REDIS_SERVER_HOST: redis
+      REDIS_SERVER_HOST: 172.28.0.11
       REDIS_SERVER_PORT: "6379"
       REDIS_SERVER_DB_NUMBER: "0"
       REDIS_SERVER_PASSWORD: ${REDIS_PASSWORD}
-      DOCUMENT_SERVER_PORT_80_TCP_ADDR: documentserver
+      DOCUMENT_SERVER_PORT_80_TCP_ADDR: 172.28.0.12
       DOCUMENT_SERVER_JWT_ENABLED: "true"
       DOCUMENT_SERVER_JWT_SECRET: ${JWT_SECRET}
       DOCUMENT_SERVER_JWT_HEADER: "AuthorizationJwt"
@@ -190,7 +199,9 @@ services:
       - cs_data:/var/www/onlyoffice/Data
       - cs_logs:/var/log/onlyoffice
       - cs_letsencrypt:/etc/letsencrypt
-    networks: [onlyoffice]
+    networks:
+      onlyoffice:
+        ipv4_address: 172.28.0.13
     expose: ["80", "443", "5222"]
     ports:
       - "5222:5222"
@@ -238,7 +249,7 @@ generate_caddyfile() {
 
     # Document Server under /ds-vpath/
     handle_path /ds-vpath/* {
-        reverse_proxy onlyoffice-documentserver:80 {
+        reverse_proxy 172.28.0.12:80 {
             header_up Host {host}
             header_up X-Forwarded-Host {host}
             header_up X-Forwarded-Proto {scheme}
@@ -248,7 +259,7 @@ generate_caddyfile() {
 
     # Community Server (default)
     handle {
-        reverse_proxy onlyoffice-communityserver:80 {
+        reverse_proxy 172.28.0.13:80 {
             header_up Host {host}
             header_up X-Forwarded-Host {host}
             header_up X-Forwarded-Proto {scheme}

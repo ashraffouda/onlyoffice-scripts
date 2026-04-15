@@ -8,7 +8,7 @@
 
     # Document Server under /ds-vpath/
     handle_path /ds-vpath/* {
-        reverse_proxy onlyoffice-documentserver:80 {
+        reverse_proxy 172.28.0.12:80 {
             header_up Host {host}
             header_up X-Forwarded-Host {host}
             header_up X-Forwarded-Proto {scheme}
@@ -18,7 +18,7 @@
 
     # Community Server (default)
     handle {
-        reverse_proxy onlyoffice-communityserver:80 {
+        reverse_proxy 172.28.0.13:80 {
             header_up Host {host}
             header_up X-Forwarded-Host {host}
             header_up X-Forwarded-Proto {scheme}

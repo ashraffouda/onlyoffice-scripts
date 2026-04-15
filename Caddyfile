@@ -1,0 +1,35 @@
+{
+    email {$ADMIN_EMAIL}
+}
+
+{$ONLYOFFICE_DOMAIN} {
+    tls internal
+    encode gzip zstd
+
+    # Document Server under /ds-vpath/
+    handle_path /ds-vpath/* {
+        reverse_proxy onlyoffice-documentserver:80 {
+            header_up Host {host}
+            header_up X-Forwarded-Host {host}
+            header_up X-Forwarded-Proto {scheme}
+            header_up X-Real-IP {remote_host}
+        }
+    }
+
+    # Community Server (default)
+    handle {
+        reverse_proxy onlyoffice-communityserver:80 {
+            header_up Host {host}
+            header_up X-Forwarded-Host {host}
+            header_up X-Forwarded-Proto {scheme}
+            header_up X-Real-IP {remote_host}
+        }
+    }
+
+    header {
+        Strict-Transport-Security "max-age=31536000;"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+}

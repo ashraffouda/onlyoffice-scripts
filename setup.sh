@@ -106,17 +106,17 @@ volumes:
 
 services:
   mysql:
-    image: mysql:8.0
+    image: mysql:5.7
     container_name: onlyoffice-mysql
     restart: unless-stopped
     command: >
-      --default-authentication-plugin=mysql_native_password
-      --character-set-server=utf8mb4
-      --collation-server=utf8mb4_general_ci
+      --character-set-server=utf8
+      --collation-server=utf8_general_ci
       --max_connections=1000
       --max_allowed_packet=1048576000
       --group_concat_max_len=2048
       --log-bin-trust-function-creators=1
+      --sql_mode=NO_ENGINE_SUBSTITUTION
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: onlyoffice
